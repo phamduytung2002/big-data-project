@@ -8,9 +8,17 @@ from pyspark.sql.functions import split
 from pyspark.sql.functions import from_json, col, current_timestamp, window, expr
 from pyspark.sql.types import StructType, StructField, StringType, TimestampType, IntegerType
 
+import pandas as pd
+from cassandra.cluster import Cluster
+from cassandra.query import SimpleStatement
+
 
 os.environ["PYSPARK_PYTHON"] = "python3"
 os.environ["SPARK_LOCAL_HOSTNAME"] = "localhost"
+
+cluster = Cluster(
+    ["cassandra-node"]
+)  # Thay '172.18.0.2' bằng địa chỉ IP của máy chủ Cassandra
 
 
 def send_data(tags: dict) -> None:
@@ -56,6 +64,48 @@ def sourceCount(time):
         current_timestamp().alias("time_received")
     )
 
+    df_info = df.select("id", "source", "title", "url")
+    df_info.write \
+        .csv('doc_info.csv', mode='overwrite')
+
+    session = cluster.connect(
+        "topic_keyspace"
+    )  # Thay 'Topic_keyspace' bằng tên keyspace của bạn
+    # Drop bảng nếu tồn tại
+    # drop_table_query = "DROP TABLE IF EXISTS topic_table;"
+    # session.execute(drop_table_query)
+    # Tạo bảng nếu chưa tồn tại
+    create_table_query = """
+        CREATE TABLE IF NOT EXISTS topic_table (
+            source TEXT,
+            window TIMESTAMP,
+            count INT,
+        );
+    """
+    session.execute(create_table_query)
+    # Đẩy dữ liệu vào bảng Cassandra
+    for _, row in df.iterrows():
+        row = row.fillna("")
+        insert_query = """
+                INSERT INTO topic_table (
+                    id, source, title, url
+                )
+                VALUES (%s, %s, %s, %s, %s);
+            """
+        session.execute(
+            SimpleStatement(insert_query),
+            (
+                row["id"],
+                row["source"],
+                row["title"],
+                row["url"]
+            ),
+        )
+
+    # Đóng kết nối
+    cluster.shutdown()
+
+
     article_counts = df_extracted.groupBy(
         window(col("time_received"), f"{time} seconds"),
         col("source")
@@ -75,9 +125,6 @@ def sourceCount(time):
     df = pd.read_csv("topic_doc1.csv", header=0)  # Assuming the header is in the first row
 
     # Kết nối đến Cassandra
-    cluster = Cluster(
-        ["cassandra-node"]
-    )  # Thay '172.18.0.2' bằng địa chỉ IP của máy chủ Cassandra
     session = cluster.connect(
         "topic_keyspace"
     )  # Thay 'Topic_keyspace' bằng tên keyspace của bạn
@@ -97,7 +144,7 @@ def sourceCount(time):
     for _, row in df.iterrows():
         row = row.fillna("")
         insert_query = """
-                INSERT INTO topic_table (
+                INSERT INTO source_table (
                     window, source, count
                 )
                 VALUES (%s, %s, %s);
