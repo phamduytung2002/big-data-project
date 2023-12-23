@@ -10,7 +10,7 @@ files_list = client.list(base_path)
 
 full_df = None
 
-spark = pyspark.sql.SparkSession.builder.appName("xyz").getOrCreate()
+spark = pyspark.sql.SparkSession.builder.appName("collect-articles").getOrCreate()
 for file_name in files_list:
     if full_df is None:
         full_df = spark.read \

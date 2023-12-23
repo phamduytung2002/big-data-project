@@ -15,7 +15,7 @@ def receive_callback(message):
     decoded_message = message.decode('utf-8')
     data_dict = json.loads(decoded_message)
 
-    spark = pyspark.sql.SparkSession.builder.appName("myApp").getOrCreate()
+    spark = pyspark.sql.SparkSession.builder.appName("consumer").getOrCreate()
     #  ["id", "author", "content", "picture_count", "source", "title", "topic", "url", "crawled_at"]
     # Create DataFrame
     df = spark.createDataFrame([data_dict])
@@ -32,7 +32,7 @@ def receive_callback(message):
 print('hello')
 # Kafka consumer configuration
 consumer_config = {
-    'bootstrap_servers': 'kafka:9092',  # Replace with your Kafka broker address
+    'bootstrap_servers': 'kafka-1:9092',  # Replace with your Kafka broker address
     'group_id': 'my_consumer_group',
     'auto_offset_reset': 'latest',
     'enable_auto_commit': True,

@@ -9,6 +9,7 @@ from pyspark.sql import SparkSession
 from pyspark.ml import Pipeline
 from pyspark.sql.functions import udf
 import pyspark
+import socket
 
 print('spark version: ', pyspark.__version__)
 print('sparknlp version: ', sparknlp.version())
@@ -16,7 +17,8 @@ print('sparknlp version: ', sparknlp.version())
 
 # tok = udf(lambda x: word_tokenize(x) if x is not None else None)
 
-
+keyspace_name = 'batch_process'
+table_name = 'all'
 
 
 spark = SparkSession.builder \
@@ -24,9 +26,15 @@ spark = SparkSession.builder \
     .config("spark.driver.memory", "8G") \
     .config("spark.driver.maxResultSize", "2G") \
     .config("spark.kryoserializer.buffer.max", "1000M") \
-    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
+    .config("spark.dse.continuousPagingEnabled", "false") \
+    .config("spark.sql.hive.enabled", "false") \
     .getOrCreate()
+    
+print('python version: ', sys.version)
+print('spark version: ', pyspark.__version__)
+print('spark nlp version: ', sparknlp.version())    
 
+# exit()
 
 file_location = r'hdfs://namenode:9000/user/pdt/news/new_batch.csv'
 file_type = "csv"
@@ -48,17 +56,15 @@ print('Schema:')
 df.printSchema()
 df.show()
 
+print('python version: ', sys.version)
+print('spark version: ', pyspark.__version__)
+print('spark nlp version: ', sparknlp.version())
+
 # overthesea_tokenize_udf = udf(tok, StringType())
 # df = df.withColumn('abc', overthesea_tokenize_udf(col('author')))
 # df.show()
 
 
-# exit()
-
-
-print('python version: ', sys.version)
-print('spark version: ', pyspark.__version__)
-print('spark nlp version: ', sparknlp.version())
 
 # Spark NLP requires the input dataframe or column to be converted to document. 
 document_assembler = DocumentAssembler() \
@@ -101,7 +107,7 @@ nlp_model = nlp_pipeline.fit(df)
 # apply the pipeline to transform dataframe.
 processed_df  = nlp_model.transform(df)
 # nlp pipeline create intermediary columns that we dont need. So lets select the columns that we need
-tokens_df = processed_df.select('author','tokens').limit(5)
+tokens_df = processed_df.select('id', 'author','tokens').limit(5)
 tokens_df.show()
 
 from pyspark.ml.feature import CountVectorizer
@@ -114,16 +120,15 @@ vectorized_tokens.show()
 
 from pyspark.ml.clustering import LDA
 num_topics = 5
-lda = LDA(k=num_topics,  )
+lda = LDA(k=num_topics, optimizer='em')
 model = lda.fit(vectorized_tokens)
 model.getTopicDistributionCol()
-print(model.topicsMatrix())
 ll = model.logLikelihood(vectorized_tokens)
 lp = model.logPerplexity(vectorized_tokens)
 print("The lower bound on the log likelihood of the entire corpus: " + str(ll))
 print("The upper bound on perplexity: " + str(lp))
-
-model.transform(vectorized_tokens).select('tokens','topicDistribution').limit(1).show()
+model.transform(vectorized_tokens).printSchema()
+doc_topic_dist = model.transform(vectorized_tokens).select('id','topicDistribution').limit(1).show()
 
 # extract vocabulary from CountVectorizer
 vocab = cv_model.vocabulary
@@ -139,5 +144,9 @@ for idx, topic in enumerate(topics_words):
     for word in topic:
        print(word)
     print("*"*25)   
+    
+# sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# # Connecting with Server
+# sock.connect(('cassandra-node', 10000))
 
 spark.stop()
