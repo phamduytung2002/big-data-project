@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  cassandra-node:
+    image: cassandra:latest
+    container_name: cassandra-node
+    ports:
+      - "9042:9042"
+    networks:
+      - cassandra-network
+    volumes:
+      - /var/lib/docker/volumes/cassandra-data/_data:/var/lib/cassandra
+    environment:
+      - CASSANDRA_USER=admin
+      - CASSANDRA_PASSWORD=admin
+    command: ["cassandra", "-f"]
+    restart: always
+
+networks:
+  cassandra-network:
+    driver: bridge
+
+volumes:
+  cassandra-data:
+
+# Commands:
+# - Start services: docker-compose up -d
+# - Stop services: docker-compose down
+# - Rebuild services: docker-compose up -d --build
+# - View status: docker-compose ps
+# - Stream log output: docker-compose logs -f
+# - Run one-off command on Cassandra node: docker-compose exec cassandra-node <command>
+# Scale:
+# Commands:
+# - Start services: docker-compose up -d --scale cassandra-node=<desired_number>
+# - Stop services: docker-compose down
+# - Rebuild services: docker-compose up -d --build --scale cassandra-node=<desired_number>
+# - View status: docker-compose ps
+# - Stream log output: docker-compose logs -f
+# - Run one-off command on Cassandra node: docker-compose exec cassandra-node_<index> <command>

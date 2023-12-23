@@ -1,0 +1,6 @@
+cluster_name: 'CassandraCluster'
+authenticator: PasswordAuthenticator
+authorizer: admin
+role_manager: admin
+
+# Add other necessary configurations based on your requirements
