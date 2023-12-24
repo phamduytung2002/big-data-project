@@ -21,6 +21,8 @@ docker exec spark-master apk add gfortran
 docker exec -it spark-master pip3 install pandas
 docker exec -it spark-master pip3 install cassandra-driver
 docker exec -it spark-master pip3 install vncorenlp
+docker exec -it spark-master apk add openblas openblas-dev
+docker exec -it spark-master pip3 install underthesea
 
 
 
@@ -41,6 +43,7 @@ docker exec spark-worker-1 apk add gfortran
 docker exec -it spark-worker-1 pip3 install pandas
 docker exec -it spark-worker-1 pip3 install cassandra-driver
 docker exec -it spark-worker-1 pip3 install vncorenlp
+docker exec -it spark-worker-1 pip3 install underthesea
 
 
 
@@ -62,6 +65,7 @@ docker exec spark-worker-2 apk add gfortran
 docker exec -it spark-worker-2 pip3 install pandas
 docker exec -it spark-worker-2 pip3 install cassandra-driver
 docker exec -it spark-worker-2 pip3 install vncorenlp
+docker exec -it spark-worker-2 pip3 install underthesea
 
 
 
@@ -83,3 +87,4 @@ docker exec spark-worker-3 apk add gfortran
 docker exec -it spark-worker-3 pip3 install pandas
 docker exec -it spark-worker-3 pip3 install cassandra-driver
 docker exec -it spark-worker-3 pip3 install vncorenlp
+docker exec -it spark-worker-3 pip3 install underthesea

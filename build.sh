@@ -19,6 +19,7 @@ sudo docker exec -it spark-master pip3 install kafka-python
 sudo docker exec -it spark-master pip3 install hdfs
 sudo docker exec -it spark-master pip3 install pandas
 sudo docker exec -it spark-master pip3 install cassandra-driver
+sudo docker exec -it spark-master pip3 install vncorenlp
 sudo docker exec spark-master apk add gfortran
 @REM sudo docker exec -it spark-master spark/bin/spark-shell --packages com.johnsnowlabs.nlp:spark-nlp_2.12:5.2.0
 @REM sudo docker exec spark-master export CC=gcc
