@@ -1,5 +1,5 @@
 -- Create keyspace
-CREATE KEYSPACE IF NOT EXISTS topic_keyspace
+CREATE KEYSPACE IF NOT EXISTS topic_keyspace2
 WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};
 
 -- Use keyspace
