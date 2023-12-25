@@ -191,7 +191,11 @@
         dataList.innerHTML = ""; // Clear the existing data
         data.forEach(function (word) {
           var wordListItem = document.createElement("li");
-          wordListItem.innerHTML = `<div class="word-item">${word.word}</div>`;
+          wordListItem.innerHTML = `
+          <div>
+            <div class="word-item">${word.word}</div>
+            <div class="word-item">${word.count}</div>
+          </div>`;
           // wordListItem.classList.add("word-item"); // Add a class
           dataList.appendChild(wordListItem);
         });
@@ -202,7 +206,11 @@
         dataList.innerHTML = ""; // Clear the existing data
         data.forEach(function (source) {
           var sourceListItem = document.createElement("li");
-          sourceListItem.innerHTML = `<div class="source-item">${source.source}</div>`;
+          sourceListItem.innerHTML = `
+          <div>
+            <div class="source-item">${source.source}</div>
+            <div class="source-item">${source.count}</div>
+          </div>`;
           // sourceListItem.classList.add("source-item"); // Add a class
           dataList.appendChild(sourceListItem);
         });
