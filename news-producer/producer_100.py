@@ -38,7 +38,9 @@ def publish_article(article):
     producer.flush()
     print('article sent')
     global all_df
-    article = article.replace('\n', ' ')
+    for x in article:
+        if isinstance(article[x], str):
+            article[x] = article[x].replace('\n', ' ')
     if all_df is None:
         all_df = pandas.DataFrame([article])
     else:
@@ -46,10 +48,18 @@ def publish_article(article):
         all_df = all_df._append(df, ignore_index=True)
 
 
+i = 0
 # Publish an article every 5 seconds
 for article in json_data:
     publish_article(article)
-    time.sleep(2)
+    i += 1
+    if i == 50:
+        break
+    time.sleep(0.5)
 
 # Close the Kafka producer
 producer.close()
+
+# Save all_df to CSV
+csv_file_path = os.path.join(os.path.dirname(__file__), 'articles.csv')
+all_df.to_csv(csv_file_path, index=False, sep='|')

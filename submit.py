@@ -11,6 +11,8 @@ files_list = client.list(base_path)
 full_df = None
 
 spark = pyspark.sql.SparkSession.builder.appName("collect-articles").getOrCreate()
+spark.sparkContext.setLogLevel("WARN")
+
 for file_name in files_list:
     if full_df is None:
         full_df = spark.read \

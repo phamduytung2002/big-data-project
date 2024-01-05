@@ -1,4 +1,4 @@
-Start "" python news-producer/producer.py 
+Start "" python news-producer/producer_100.py 
 
 timeout /t 6 
 

@@ -1,0 +1,29 @@
+FROM bde2020/spark-worker:3.1.1-hadoop3.2-java11
+
+RUN apk update
+
+# Upgrade pip
+RUN python3 -m pip install --upgrade pip
+
+# Install required packages
+RUN apk add --no-cache python3-dev py3-pip build-base
+RUN apk add --no-cache lapack-dev libexecinfo-dev
+RUN apk add build-base python3-dev
+
+# Ensure pip is installed
+RUN python3 -m ensurepip --default-pip
+
+# Download and install pip
+RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py
+
+# Upgrade pip and setuptools
+RUN pip install --upgrade pip setuptools
+
+# Install Python packages
+RUN pip3 install --compile --pre numpy
+RUN pip3 install sparknlp
+RUN pip3 install kafka-python
+RUN pip3 install hdfs
+RUN apk add gfortran
+RUN pip3 install pandas
+RUN pip3 install cassandra-driver

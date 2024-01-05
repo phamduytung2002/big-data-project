@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 from sparknlp.base import *
+import time
 from sparknlp.annotator import *
 import sparknlp
 from pyspark.sql import SparkSession
@@ -38,6 +39,8 @@ spark = (
     .getOrCreate()
 )
 
+spark.sparkContext.setLogLevel("WARN")
+
 # check version
 print("python version: ", sys.version)
 print("spark version: ", pyspark.__version__)
@@ -49,18 +52,25 @@ file_type = "csv"
 # CSV options
 infer_schema = "true"
 first_row_is_header = "true"
-delimiter = "|||"
+delimiter = "|"
 df = (
     spark.read.format(file_type)
     .option("inferSchema", infer_schema)
     .option("header", first_row_is_header)
     .option("sep", delimiter)
     .load(file_location)
+    .repartition(2)
 )
 
 # concatenate title, content and topic
-df = df.withColumn("content", F.coalesce(F.col("content"), F.lit("")))
-df = df.withColumn("concat", F.concat(F.col("title"), F.lit(" "), F.col("content"), F.lit(""), F.col("topic")))
+concatStage = SQLTransformer(
+    statement="""
+    SELECT
+        *, 
+        CONCAT(`title`, ' ', COALESCE(content, ''), ' ', topic) AS concat
+    FROM __THIS__;
+    """
+)
 
 
 # build sparknlp preprocessing pipeline
@@ -76,11 +86,10 @@ normalizer = Normalizer().setInputCols(["token"]).setOutputCol("normalized")
 #      .setInputCols("normalized")\
 #      .setOutputCol("cleanTokens")\
 #      .setCaseSensitive(False)
-stemmer = Stemmer().setInputCols(["normalized"]).setOutputCol("stem")
 # Finisher is the most important annotator. Spark NLP adds its own structure when we convert each row in the dataframe to document. Finisher helps us to bring back the expected structure viz. array of tokens.
 finisher = (
     Finisher()
-    .setInputCols(["stem"])
+    .setInputCols(["normalized"])
     .setOutputCols(["tokens"])
     .setOutputAsArray(True)
     .setCleanAnnotations(False)
@@ -89,45 +98,55 @@ finisher = (
 cv = CountVectorizer(inputCol="tokens", outputCol="features", vocabSize=500, minDF=3.0)
 
 num_topics = 5
-lda = LDA(k=num_topics, optimizer="em")
+lda = LDA(k=num_topics, optimizer="online", maxIter=1000)
+lda.setCheckpointInterval(5)
 
 argmax = spark.udf.register(
     "argmax", lambda x: int(np.argmax(x)), returnType=IntegerType()
 )
 
-ArgMaxStage = SQLTransformer(statement="SELECT *, argmax(topicDistribution) as topic_lda FROM __THIS__")
+ArgMaxStage = SQLTransformer(
+    statement="SELECT *, int(argmax(topicDistribution)) as topic_lda FROM __THIS__"
+)
 
 
 nlp_pipeline = Pipeline(
     stages=[
+        concatStage,
         document_assembler,
         tokenizer,
         normalizer,
         # stopwords_cleaner,
-        stemmer,
         finisher,
         cv,
         lda,
-        ArgMaxStage
+        ArgMaxStage,
     ]
 )
 
 nlp_model = nlp_pipeline.fit(df)
 processed_df = nlp_model.transform(df)
-topic_lda_df = processed_df.select("id", "topic_lda")
-topic_lda_df.show()
+# processed_df.show()
+topic_lda_df = processed_df.select("id", "title", col("topic_lda").astype("int")).where(col('title').isNotNull())
+# topic_lda_df.show()
 
 topic_lda_pd_df = topic_lda_df.toPandas()
 
+topic_lda_df.show()
+
+# topic_lda_df.write.format("org.apache.spark.sql.cassandra").options(table="article", keyspace="newshub").save(mode="append")
+
+# time.sleep(10000000)
 spark.stop()
 
+# exit()
 # Kết nối đến Cassandra
 cluster = Cluster(
     ["cassandra-node"]
 )  # Thay '172.18.0.2' bằng địa chỉ IP của máy chủ Cassandra
 
 session = cluster.connect(
-    "topic_keyspace"
+    "newshub"
 )  # Thay 'Topic_keyspace' bằng tên keyspace của bạn
 # Drop bảng nếu tồn tại
 # drop_table_query = "DROP TABLE IF EXISTS article;"
@@ -156,8 +175,8 @@ for _, row in topic_lda_pd_df.iterrows():
     session.execute(
         SimpleStatement(insert_query),
         (
-            row["id"],
-            row["topic"],
+            int(row["id"]),
+            int(row["topic_lda"]),
         ),
     )
 

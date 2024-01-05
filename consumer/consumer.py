@@ -47,7 +47,7 @@ consumer = KafkaConsumer(**consumer_config)
 print("created")
 
 # Subscribe to a Kafka topic
-kafka_topic = 'your_kafka_topic'  # Replace with your Kafka topic
+kafka_topic = 'newsss'  # Replace with your Kafka topic
 consumer.subscribe([kafka_topic])
 
 print("subscribed")
