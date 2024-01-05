@@ -22,6 +22,12 @@
 - Set up cassandra (and insert dummy rows)
   > cass.bat
 
-- Batch process:
+- Submit streaming job:
+  > submit_streaming.bat
+
+- Submit batch job:
   > submit.bat  # collect csv(s) from consumer
   > submitmoel.bat  # run LDA on new batch
+
+- UI:
+  > runUI.bat
