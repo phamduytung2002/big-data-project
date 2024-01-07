@@ -38,7 +38,9 @@ def publish_article(article):
     producer.flush()
     print('article sent')
     global all_df
-    article = article.replace('\n', ' ')
+    for x in article:
+        if isinstance(article[x], str):
+            article[x] = article[x].replace('\n', ' ')
     if all_df is None:
         all_df = pandas.DataFrame([article])
     else:
@@ -49,7 +51,7 @@ def publish_article(article):
 # Publish an article every 5 seconds
 for article in json_data:
     publish_article(article)
-    time.sleep(2)
+    time.sleep(0.5)
 
 # Close the Kafka producer
 producer.close()

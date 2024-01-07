@@ -1,1 +1,1 @@
-python UI/app.py
+conda activate bigdata & python UI/app.py

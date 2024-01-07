@@ -1,8 +1,6 @@
 from kafka import KafkaConsumer
 import datetime
 import json
-from pyspark.sql import SparkSession
-from pyspark.sql import Row
 import pyspark
 from pyspark.sql.types import *
 import os

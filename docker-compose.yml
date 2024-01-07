@@ -118,9 +118,9 @@ services:
       - PYSPARK_PYTHON=/usr/bin/python3
       - "SPARK_MASTER=spark://spark-master:7077"
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
-      - SPARK_WORKER_CORES=2
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_WORKER_CORES=3
+      - SPARK_WORKER_MEMORY=3G
+      - SPARK_DRIVER_MEMORY=3G
 
 
   spark-worker-2:
@@ -133,24 +133,24 @@ services:
     environment:
       - "SPARK_MASTER=spark://spark-master:7077"
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
-      - SPARK_WORKER_CORES=2
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_WORKER_CORES=3
+      - SPARK_WORKER_MEMORY=3G
+      - SPARK_DRIVER_MEMORY=3G
       
 
-  # spark-worker-3:
-  #   image: phamduytung2002/spark-worker
-  #   container_name: spark-worker-3
-  #   depends_on:
-  #     - spark-master
-  #   ports:
-  #     - "8083:8083"
-  #   environment:
-  #     - "SPARK_MASTER=spark://spark-master:7077"
-  #     - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
-  #     - SPARK_WORKER_CORES=3
-  #     - SPARK_WORKER_MEMORY=3G
-  #     - SPARK_DRIVER_MEMORY=3G
+  spark-worker-3:
+    image: phamduytung2002/spark-worker
+    container_name: spark-worker-3
+    depends_on:
+      - spark-master
+    ports:
+      - "8083:8083"
+    environment:
+      - "SPARK_MASTER=spark://spark-master:7077"
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - SPARK_WORKER_CORES=3
+      - SPARK_WORKER_MEMORY=3G
+      - SPARK_DRIVER_MEMORY=3G
 
 
   zookeeper:
@@ -178,7 +178,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
       KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.request.logger=WARN"
       KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
     volumes:
@@ -200,7 +200,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9093,PLAINTEXT_HOST://localhost:29093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
       KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.request.logger=WARN"
       KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
     volumes:
@@ -222,7 +222,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9094,PLAINTEXT_HOST://localhost:29094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
       KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.request.logger=WARN"
       KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
     volumes:

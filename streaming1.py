@@ -8,9 +8,11 @@ from pyspark.sql.functions import split
 from pyspark.sql.functions import from_json, col, current_timestamp, window, expr
 from pyspark.sql.types import StructType, StructField, StringType, TimestampType, IntegerType
 
+import threading
 import pandas as pd
 from cassandra.cluster import Cluster
 from cassandra.query import SimpleStatement
+from cassandra.policies import ReconnectionPolicy
 
 def save_to_cassandra(rdd):
     if not rdd.isEmpty():
@@ -20,23 +22,17 @@ def save_to_cassandra(rdd):
 os.environ["PYSPARK_PYTHON"] = "python3"
 os.environ["SPARK_LOCAL_HOSTNAME"] = "localhost"
 
-# cluster = Cluster(
-#     ["cassandra-node"]
-# )  # Thay '172.18.0.2' bằng địa chỉ IP của máy chủ Cassandra
-
-
 def send_data(tags: dict) -> None:
     # url = 'http://localhost:5001/updateData'
     # response = requests.post(url, json=tags)
     print(tags)
 
-# def process_row(row: pyspark.sql.types.Row) -> None:
-#     # print(type(row))  # pyspark.sql.types.Row
-#     # print(row)            # Row(hashtag='#BSCGems', count=2)
-#     tags = row.asDict()
-#     print(tags)  # {'hashtag': '#Colorado', 'count': 1}
-#     send_data(tags)
 
+class CustomReconnectionPolicy(ReconnectionPolicy):
+    def new_schedule(self):
+        # Reconnect every 5 seconds
+        return [5]
+    
 
 def sourceCount(time):
     spark = SparkSession.builder.appName("KafkaSparkStreaming").getOrCreate()
@@ -67,20 +63,61 @@ def sourceCount(time):
         current_timestamp().alias("time_received")
     )
 
+    cluster = Cluster(
+        ["cassandra-node"],
+        connect_timeout=1000,
+        connection_timeout=10,
+        reconnection_policy=CustomReconnectionPolicy(),
+    )  # Thay '172.18.0.2' bằng địa chỉ IP của máy chủ Cassandra
+
+    session = cluster.connect(
+        "newshub"
+    )  
+    
+    def process_ori_thread(df, epoch_id):
+        if not df.rdd.isEmpty():
+            print(f"Batch {epoch_id} - Dữ liệu:")
+            for row in df.toLocalIterator():
+                print(row)
+                # row = row.fillna("")
+                insert_query = """
+                    INSERT INTO article (
+                        id, author, source, title, url
+                    )
+                    VALUES (%s, %s, %s, %s, %s);
+                """
+                session.execute(
+                SimpleStatement(insert_query),
+                (
+                    int(row["id"]),
+                    row["author"],
+                    row["source"],
+                    row["title"],
+                    row["url"]
+                ),
+                )
+
+        else:
+            print(f"Batch {epoch_id} is empty")
+            
+    def process_ori(df, epoch_id):
+        thread = threading.Thread(target=process_ori_thread, args=(df, epoch_id))
+        thread.start()
+    
+    query = df_extracted.writeStream \
+        .outputMode("update") \
+        .foreachBatch(process_ori) \
+        .trigger(processingTime=f"{time} seconds") \
+        .start()
+    # query.awaitTermination()
+
+
     article_counts = df_extracted.groupBy(
         window(col("time_received"), f"{time} seconds"),
         col("source")
     ).count()
 
     collected_data = []
-    
-    cluster = Cluster(
-        ["cassandra-node"]
-    )  # Thay '172.18.0.2' bằng địa chỉ IP của máy chủ Cassandra
-
-    session = cluster.connect(
-        "newshub"
-    )  
 
     def process_row(df, epoch_id):
         if not df.rdd.isEmpty():
@@ -129,16 +166,17 @@ def sourceCount(time):
     return collected_data
 
 if __name__ == '__main__':
-    try:
-        collected_source_counts = sourceCount(10)
-        for data in collected_source_counts:
-            print('hello')
-    except BrokenPipeError:
-        exit("Pipe Broken, Exiting...")
-    except KeyboardInterrupt:
-        exit("Keyboard Interrupt, Exiting..")
-    except Exception as e:
-        traceback.print_exc()
-        exit("Error in Spark App")
+    while True:
+        try:
+            collected_source_counts = sourceCount(50)
+            for data in collected_source_counts:
+                print('hello')
+        except BrokenPipeError:
+            exit("Pipe Broken, Exiting...")
+        except KeyboardInterrupt:
+            exit("Keyboard Interrupt, Exiting..")
+        except Exception as e:
+            traceback.print_exc()
+            exit("Error in Spark App")
 
 #id, author, content, source, topic, url, crawled_at

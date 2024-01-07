@@ -1,9 +1,11 @@
+DROP KEYSPACE IF EXISTS newshub;
+
 -- Create keyspace
-CREATE KEYSPACE IF NOT EXISTS topic_keyspace
+CREATE KEYSPACE IF NOT EXISTS newshub
 WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};
 
 -- Use keyspace
-USE topic_keyspace;
+USE newshub;
 
 -- Create table for articles
 CREATE TABLE IF NOT EXISTS article (

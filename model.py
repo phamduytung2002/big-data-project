@@ -86,7 +86,9 @@ normalizer = Normalizer().setInputCols(["token"]).setOutputCol("normalized")
 #      .setInputCols("normalized")\
 #      .setOutputCol("cleanTokens")\
 #      .setCaseSensitive(False)
-# Finisher is the most important annotator. Spark NLP adds its own structure when we convert each row in the dataframe to document. Finisher helps us to bring back the expected structure viz. array of tokens.
+# Finisher is the most important annotator.
+# Spark NLP adds its own structure when we convert each row in the dataframe to document. 
+# Finisher helps us to bring back the expected structure viz. array of tokens.
 finisher = (
     Finisher()
     .setInputCols(["normalized"])
@@ -98,7 +100,7 @@ finisher = (
 cv = CountVectorizer(inputCol="tokens", outputCol="features", vocabSize=500, minDF=3.0)
 
 num_topics = 5
-lda = LDA(k=num_topics, optimizer="online", maxIter=1000)
+lda = LDA(k=num_topics, optimizer="online", maxIter=100)
 lda.setCheckpointInterval(5)
 
 argmax = spark.udf.register(
@@ -148,6 +150,11 @@ cluster = Cluster(
 session = cluster.connect(
     "newshub"
 )  # Thay 'Topic_keyspace' bằng tên keyspace của bạn
+result_set = session.execute("SELECT id FROM article WHERE topic > -1 ALLOW FILTERING;")
+results_list = [(row.id, ) for row in result_set]
+for id in results_list:
+    session.execute("DELETE FROM article WHERE id = %s;", (id[0],))
+
 # Drop bảng nếu tồn tại
 # drop_table_query = "DROP TABLE IF EXISTS article;"
 # session.execute(drop_table_query)

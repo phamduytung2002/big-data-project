@@ -1,0 +1,1 @@
+conda activate bigdata & python news-producer/producer.py

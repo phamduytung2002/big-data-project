@@ -11,7 +11,7 @@ socketio = SocketIO(app)
 
 def get_data_from_cassandra_article(table_name):
     cluster = Cluster(["localhost"])
-    session = cluster.connect("topic_keyspace")
+    session = cluster.connect("newshub")
 
     query = f"SELECT * FROM {table_name}"
     result = session.execute(query)
@@ -23,7 +23,7 @@ def get_data_from_cassandra_article(table_name):
 
 def get_data_from_cassandra_trending_word_count(table_name):
     cluster = Cluster(["localhost"])
-    session = cluster.connect("topic_keyspace")
+    session = cluster.connect("newshub")
     # Lấy thời điểm hiện tại
     current_time = datetime.now()
     
@@ -49,7 +49,7 @@ def get_data_from_cassandra_trending_word_count(table_name):
 
 def get_data_from_cassandra_source_count(table_name):
     cluster = Cluster(["localhost"])
-    session = cluster.connect("topic_keyspace")
+    session = cluster.connect("newshub")
     # Lấy thời điểm hiện tại
     current_time = datetime.now()
     
@@ -75,7 +75,7 @@ def get_data_from_cassandra_source_count(table_name):
 
 def get_data_from_cassandra_total_word_count(table_name):
     cluster = Cluster(["localhost"])
-    session = cluster.connect("topic_keyspace")
+    session = cluster.connect("newshub")
 
     query = f"SELECT * FROM {table_name}"
     result = session.execute(query)

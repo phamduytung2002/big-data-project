@@ -2,6 +2,8 @@
 
 import pyspark
 import hdfs
+import random
+import time
 
 base_path = "/user/pdt/news/"
 
@@ -13,7 +15,16 @@ full_df = None
 spark = pyspark.sql.SparkSession.builder.appName("collect-articles").getOrCreate()
 spark.sparkContext.setLogLevel("WARN")
 
+processed_list = []
+try:
+    processed_list = client.list("/user/pdt/processed")
+except:
+    pass
+
+
 for file_name in files_list:
+    if file_name in processed_list:
+        continue
     if full_df is None:
         full_df = spark.read \
             .option("delimiter","|||") \
@@ -37,5 +48,5 @@ full_df.write \
     .option("delimiter", "|||") \
     .csv("hdfs://namenode:9000/user/pdt/news/new_batch.csv", header=True)
 
-for file_name in files_list:
-    client.delete(base_path + file_name, recursive=True)
+# for file_name in files_list:
+#     client.delete(base_path + file_name, recursive=True)
