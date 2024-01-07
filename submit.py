@@ -23,30 +23,34 @@ except:
 
 
 for file_name in files_list:
-    if file_name in processed_list:
-        continue
-    if full_df is None:
-        full_df = spark.read \
-            .option("delimiter","|||") \
-            .option("header", "true") \
-            .csv("hdfs://namenode:9000" + base_path + file_name)
-        full_df.write \
-            .option("delimiter","|||") \
-            .csv(f"hdfs://namenode:9000/user/pdt/processed/{file_name}", header=True)
-    else:
-        df = spark.read \
-            .option("delimiter","|||") \
-            .option("header", "true") \
-            .csv("hdfs://namenode:9000" + base_path + file_name)
-        full_df = full_df.union(df)
-        full_df.write \
-            .option("delimiter","|||") \
-            .csv(f"hdfs://namenode:9000/user/pdt/processed/{file_name}", header=True)
+    try:
+        if file_name in processed_list:
+            continue
+        if full_df is None:
+            full_df = spark.read \
+                .option("delimiter","|||") \
+                .option("header", "true") \
+                .csv("hdfs://namenode:9000" + base_path + file_name)
+            full_df.write \
+                .option("delimiter","|||") \
+                .csv(f"hdfs://namenode:9000/user/pdt/processed/{file_name}", header=True)
+        else:
+            df = spark.read \
+                .option("delimiter","|||") \
+                .option("header", "true") \
+                .csv("hdfs://namenode:9000" + base_path + file_name)
+            full_df = full_df.union(df)
+            full_df.write \
+                .option("delimiter","|||") \
+                .csv(f"hdfs://namenode:9000/user/pdt/processed/{file_name}", header=True)
+    except:
+        pass
 
-
-full_df.write \
-    .option("delimiter", "|||") \
-    .csv("hdfs://namenode:9000/user/pdt/news/new_batch.csv", header=True)
-
+try:
+    full_df.write \
+        .option("delimiter", "|||") \
+        .csv("hdfs://namenode:9000/user/pdt/news/new_batch.csv", header=True)
+except:
+    pass
 # for file_name in files_list:
 #     client.delete(base_path + file_name, recursive=True)

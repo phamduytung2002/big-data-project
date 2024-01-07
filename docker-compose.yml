@@ -232,15 +232,39 @@ services:
   cassandra-node:
     image: cassandra:latest
     container_name: cassandra-node
+    networks:
+      - cassandra-net
+    environment:
+      - CASSANDRA_SEEDS=cassandra-node,cassandra2,cassandra3
     ports:
       - "9042:9042"
     volumes:
-      - /var/lib/docker/volumes/cassandra-data/_data:/var/lib/cassandra
+      - cassandra-node-data:/var/lib/cassandra
+
+  cassandra2:
+    image: cassandra:latest
+    container_name: cassandra2
+    networks:
+      - cassandra-net
     environment:
-      - CASSANDRA_USER=admin
-      - CASSANDRA_PASSWORD=admin
-    command: ["cassandra", "-f"]
-    restart: always
+      - CASSANDRA_SEEDS=cassandra-node,cassandra2,cassandra3
+    ports:
+      - "9043:9042"
+    volumes:
+      - cassandra2-data:/var/lib/cassandra
+
+  cassandra3:
+    image: cassandra:latest
+    container_name: cassandra3
+    networks:
+      - cassandra-net
+    environment:
+      - CASSANDRA_SEEDS=cassandra-node,cassandra2,cassandra3
+    ports:
+      - "9044:9042"
+    volumes:
+      - cassandra3-data:/var/lib/cassandra
+
 
 
   spark-history-server:
@@ -254,10 +278,18 @@ services:
         - /tmp/spark-events-local:/tmp/spark-events
 
 
+networks:
+  cassandra-net:
+    driver: bridge
+
+
 volumes:
   hadoop_namenode:
   hadoop_datanode-1:
   hadoop_datanode-2:
   hadoop_datanode-3:
   hadoop_historyserver:
+  cassandra-node-data:
+  cassandra2-data:
+  cassandra3-data:
 

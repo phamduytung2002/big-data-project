@@ -2,7 +2,7 @@ DROP KEYSPACE IF EXISTS newshub;
 
 -- Create keyspace
 CREATE KEYSPACE IF NOT EXISTS newshub
-WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};
+WITH replication = {'class':'SimpleStrategy', 'replication_factor':3};
 
 -- Use keyspace
 USE newshub;

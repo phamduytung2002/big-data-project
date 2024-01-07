@@ -1,3 +1,4 @@
+docker exec -it namenode hdfs dfsadmin -safemode leave
 docker exec -it namenode hadoop dfs -rm -r /user
 docker exec -it namenode hdfs dfs -mkdir /user
 docker exec -it namenode hdfs dfs -mkdir /user/pdt
