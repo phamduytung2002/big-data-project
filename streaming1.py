@@ -66,7 +66,6 @@ def sourceCount(time):
     cluster = Cluster(
         ["cassandra-node"],
         connect_timeout=1000,
-        connection_timeout=10,
         reconnection_policy=CustomReconnectionPolicy(),
     )  # Thay '172.18.0.2' bằng địa chỉ IP của máy chủ Cassandra
 
